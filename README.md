@@ -33,5 +33,5 @@ This is a secure backend API built with Java 8, Spring MVC, MyBatis, and MySQL, 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/mochebrolu/SweechJavaBackendDemo.git
 cd your-repo
