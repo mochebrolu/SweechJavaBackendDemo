@@ -1,46 +1,21 @@
-package com.sweech.app.service;
+package com.sweech.app.mapper;
 
-import java.time.Instant;
+import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.apache.ibatis.annotations.Param;
 
-import com.sweech.app.dto.UserDto;
-import com.sweech.app.mapper.UserMapper;
+import com.sweech.app.model.User;
 
-@Service
-public class UserService {
+public interface UserMapper {
+	User findByEmail(@Param("email") String email);
 
-    @Autowired
-    private UserMapper userMapper;
+	User findById(@Param("id") Long id);
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+	void insert(User user);
 
-    @Transactional
-    public void signup(UserDto userDto) {
-        // Validate and encode password
-        if (!isValidPassword(userDto.getPassword())) {
-            throw new IllegalArgumentException("Invalid password format");
-        }
-        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        userDto.setRegistrationTime(Instant.now().toString());
+	void update(User user);
 
-        // Check for duplicate email
-        if (userMapper.findByEmail(userDto.getEmail()) != null) {
-            throw new IllegalArgumentException("Email already exists");
-        }
+	void delete(@Param("id") Long id);
 
-        // Insert user into database
-        userMapper.insert(userDto);
-    }
-
-    private boolean isValidPassword(String password) {
-        return password.length() >= 12 && password.length() <= 20 &&
-               password.matches(".*[a-z].*") &&
-               password.matches(".*[0-9].*") &&
-               password.matches(".*[!@#$%^&*].*");
-    }
+	List<User> findAll();
 }

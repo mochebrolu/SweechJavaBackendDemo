@@ -6,15 +6,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sweech.app.service.LoginRankingService;
+
 @RestController
 @RequestMapping("/api/rankings")
 public class RankingController {
 
     @Autowired
-    private LoginService loginService;
+    private LoginRankingService rankingService;
 
     @GetMapping("/weekly")
     public ResponseEntity<?> weeklyRanking() {
-        return ResponseEntity.ok(loginService.getWeeklyRanking());
+        return ResponseEntity.ok(rankingService.getWeeklyLoginRankings());
     }
 }
