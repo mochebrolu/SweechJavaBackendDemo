@@ -1,13 +1,14 @@
 package com.sweech.app.service;
 
+
 import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.sweech.app.dto.UserDto;
+import com.sweech.app.mapper.UserMapper;
+import com.sweech.app.model.User;
 
 @Service
 public class UserService {
@@ -15,31 +16,40 @@ public class UserService {
     @Autowired
     private UserMapper userMapper;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Transactional
-    public void signup(UserDto userDto) {
-        // Validate and encode password
-        if (!isValidPassword(userDto.getPassword())) {
-            throw new IllegalArgumentException("Invalid password format");
-        }
-        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        userDto.setRegistrationTime(Instant.now().toString());
-
-        // Check for duplicate email
-        if (userMapper.findByEmail(userDto.getEmail()) != null) {
+    public User registerUser(String email, String rawPassword, String username) {
+        if (userMapper.findByEmail(email)!=null) {
             throw new IllegalArgumentException("Email already exists");
         }
-
-        // Insert user into database
-        userMapper.insert(userDto);
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRegisteredAt(Instant.now().toString());
+        userMapper.insert(user);
+        return user;
     }
 
-    private boolean isValidPassword(String password) {
-        return password.length() >= 12 && password.length() <= 20 &&
-               password.matches(".*[a-z].*") &&
-               password.matches(".*[0-9].*") &&
-               password.matches(".*[!@#$%^&*].*");
+    public void updateUser(Long userId, String newPassword, String newUsername) {
+        User existing = userMapper.findById(userId);
+        if (existing == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+        if (newPassword != null) {
+            existing.setPassword(passwordEncoder.encode(newPassword));
+        }
+        if (newUsername != null) {
+            existing.setUsername(newUsername);
+        }
+        userMapper.update(existing);
+    }
+
+    public User findByEmail(String email) {
+        return userMapper.findByEmail(email);
+    }
+
+    public User findById(Long id) {
+        return userMapper.findById(id);
     }
 }

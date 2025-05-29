@@ -1,17 +1,21 @@
 package com.sweech.app.mapper;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import java.util.List;
 
-import com.sweech.app.dto.UserDto;
+import org.apache.ibatis.annotations.Param;
 
-@Mapper
+import com.sweech.app.model.User;
+
 public interface UserMapper {
+	User findByEmail(@Param("email") String email);
 
-    @Insert("INSERT INTO members (email, password, username, registration_time) VALUES (#{email}, #{password}, #{username}, #{registrationTime})")
-    void insert(UserDto userDto);
+	User findById(@Param("id") Long id);
 
-    @Select("SELECT * FROM members WHERE email = #{email}")
-    UserDto findByEmail(String email);
+	void insert(User user);
+
+	void update(User user);
+
+	void delete(@Param("id") Long id);
+
+	List<User> findAll();
 }

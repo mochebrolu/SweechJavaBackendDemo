@@ -2,6 +2,9 @@ package com.sweech.app.dto;
 
 public class CommentDto {
     private Long id;
+    
+    private Long postId;
+    
     private String content;
     private String username;
     private String createdAt;
@@ -28,6 +31,12 @@ public class CommentDto {
 	}
 	public void setCreatedAt(String createdAt) {
 		this.createdAt = createdAt;
+	}
+	public Long getPostId() {
+		return postId;
+	}
+	public void setPostId(Long postId) {
+		this.postId = postId;
 	}
     
     

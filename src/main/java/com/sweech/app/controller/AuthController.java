@@ -1,6 +1,6 @@
 package com.sweech.app.controller;
 
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,33 +10,70 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sweech.app.dto.ErrorResponse;
 import com.sweech.app.dto.LoginRequest;
-import com.sweech.app.dto.UserDto;
-import com.sweech.app.security.TokenService;
+import com.sweech.app.dto.LoginResponse;
+import com.sweech.app.dto.RegisterRequest;
+import com.sweech.app.dto.RegisterResponse;
+import com.sweech.app.model.User;
+import com.sweech.app.service.AuthService;
+import com.sweech.app.service.LoginRecordService;
+import com.sweech.app.service.UserService;
+import com.sweech.app.util.IpAddressFinder;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
+    private AuthService authService;
+    
+    @Autowired
+    private LoginRecordService loginRecordService;
+    
+    @Autowired
     private UserService userService;
 
-    @Autowired
-    private TokenService tokenService;
-
-    @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    @PostMapping(value = "/signup", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> signup(@RequestBody RegisterRequest request) {
         try {
-            UserDto user = userService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
+            User user = authService.registerUser(request.getEmail(), request.getPassword(), request.getUsername());
 
-            // Save login record
-            String ip = request.getRemoteAddr();
-            userService.logLogin(user.getEmail(), ip);
+            RegisterResponse response = new RegisterResponse();
+            response.setEmail(user.getEmail());
+            response.setUsername(user.getUsername());
+            response.setCreatedAt(user.getRegisteredAt());
 
-            String token = tokenService.generateToken(user.getEmail());
-            return ResponseEntity.ok(Map.of("token", token));
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                new ErrorResponse("registration_failed", e.getMessage())
+            );
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "login_failed", "message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ErrorResponse("server_error", "An unexpected error occurred")
+            );
         }
     }
+
+    @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request,HttpServletRequest httpRequest) {
+        try {
+            String token = authService.login(request.getEmail(), request.getPassword());
+            User user = userService.findByEmail(request.getEmail());
+            loginRecordService.recordLogin(user.getId(), IpAddressFinder.getClientIpAddress(httpRequest));
+            return ResponseEntity.ok(new LoginResponse(token));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse("login_failed", e.getMessage())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ErrorResponse("server_error", "An unexpected error occurred")
+            );
+        }
+    }
+
+
 }

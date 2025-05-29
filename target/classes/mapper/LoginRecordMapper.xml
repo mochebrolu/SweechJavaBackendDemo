@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sweech.app.mapper.LoginRecordMapper">
+	<insert id="insert" parameterType="com.sweech.app.model.LoginRecord" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO login_record (user_id, login_time, ip_address)
+    VALUES (#{userId}, #{loginTime}, #{ipAddress})
+  </insert>
+    <select id="findRecentByUserId" resultType="com.sweech.app.dto.LoginRecordDto">
+    SELECT
+      m.email,
+      m.username,
+      lr.login_time AS loginTime,
+      lr.ip_address AS ipAddress
+    FROM login_record lr
+    LEFT JOIN member m ON lr.user_id = m.id
+    WHERE lr.user_id = #{userId}
+    ORDER BY lr.login_time DESC
+    LIMIT #{limit}
+  </select>
+<select id="getWeeklyLoginRanks" resultType="map">
+  <![CDATA[
+  WITH WeeklyLogins AS (
+    SELECT
+        lr.user_id,
+        u.username,
+        COUNT(*) AS login_count
+    FROM login_record lr
+    LEFT JOIN member u ON lr.user_id = u.id
+    WHERE lr.login_time BETWEEN CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 2) DAY
+                            AND CURDATE() - INTERVAL (DAYOFWEEK(CURDATE()) - 1) DAY
+    GROUP BY lr.user_id
+),
+RankedLogins AS (
+    SELECT
+        user_id,
+        username,
+        login_count,
+        DENSE_RANK() OVER (ORDER BY login_count DESC) AS rank
+    FROM WeeklyLogins
+)
+SELECT
+    username,
+    login_count,
+    rank,
+    COUNT(*) OVER (PARTITION BY rank) AS users_in_rank
+FROM RankedLogins
+WHERE rank <= 20
+ORDER BY rank, login_count DESC
+ ]]>
+</select>
+
+</mapper>

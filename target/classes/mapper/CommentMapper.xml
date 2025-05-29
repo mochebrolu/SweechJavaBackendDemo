@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sweech.app.mapper.CommentMapper">
+
+  <insert id="insert" parameterType="com.sweech.app.model.Comment" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO comment (post_id, user_id, content, created_at)
+    VALUES (#{postId}, #{userId}, #{content}, #{createdAt})
+  </insert>
+
+  <select id="findById" parameterType="long" resultType="com.sweech.app.model.Comment">
+    SELECT * FROM comment WHERE id = #{id}
+  </select>
+
+  <delete id="delete" parameterType="long">
+    DELETE FROM comment WHERE id = #{id}
+  </delete>
+
+  <select id="findCommentsByPostIdWithCursor" resultType="com.sweech.app.dto.CommentDto">
+    SELECT c.id, c.content, m.username, c.created_at as createdAt
+    FROM comment c
+    JOIN member m ON c.user_id = m.id
+    WHERE c.post_id = #{postId}
+    <if test="cursor != null">
+      AND c.id < #{cursor}
+    </if>
+    ORDER BY c.created_at DESC
+    LIMIT #{limit}
+  </select>
+</mapper>
