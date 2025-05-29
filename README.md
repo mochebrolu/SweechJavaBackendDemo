@@ -37,14 +37,10 @@ git clone https://github.com/mochebrolu/SweechJavaBackendDemo.git
 cd your-repo
 
 2. Build the Project
-bash
-Copy
-Edit
+
 mvn clean package
 3. Run with Docker Compose
-bash
-Copy
-Edit
+
 docker-compose up --build
 The backend will be available at:
 👉 http://localhost:3001
@@ -79,10 +75,6 @@ GET /api/rankings/weekly
 
 🧪 Testing
 Basic unit tests are included using JUnit. You can run them with:
-
-bash
-Copy
-Edit
 mvn test
 🧰 Tools Used
 Spring Boot
